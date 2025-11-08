@@ -48,9 +48,9 @@ jobs:
           AUTOMERGE_SHARED_SECRET: ${{ secrets.AUTOMERGE_SHARED_SECRET }}
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
-          PR_NUMBER: ${{ steps.validate.outputs.prNumber }}
-          PAYLOAD: ${{ steps.validate.outputs.payload }}
-          SIGHEX: ${{ steps.validate.outputs.sigHex }}
+          PR_NUMBER: ${{ fromJson(steps.validate.outputs.result).prNumber }}
+          PAYLOAD: ${{ fromJson(steps.validate.outputs.result).payload }}
+          SIGHEX: ${{ fromJson(steps.validate.outputs.result).sigHex }}
         run: |
           set -euo pipefail
           if [ -z "${AUTOMERGE_SHARED_SECRET:-}" ]; then
