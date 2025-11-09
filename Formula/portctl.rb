@@ -5,20 +5,20 @@
 class Portctl < Formula
   desc "Find and free processes binding a TCP port"
   homepage "https://github.com/chasesaurabh/portctl"
-  version "1.0.2-SNAPSHOT-272216e"
+  version "1.0.3-SNAPSHOT-4de41c1"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/chasesaurabh/portctl/releases/download/v1.0.2/portctl_1.0.2-SNAPSHOT-272216e_darwin_amd64.tar.gz"
-      sha256 "6fdec7c5e33730cb86e5546af4215d015b75574f7c5db604c2a8ad14c6a3b4fe"
+      url "https://github.com/chasesaurabh/portctl/releases/download/v1.0.3/portctl_1.0.3-SNAPSHOT-4de41c1_darwin_amd64.tar.gz"
+      sha256 "9e3ac5ef11fbf83063a75a8186ac437fba3a40a38d4b1e64ce82ed2c80fa5696"
 
       def install
         bin.install "portctl"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/chasesaurabh/portctl/releases/download/v1.0.2/portctl_1.0.2-SNAPSHOT-272216e_darwin_arm64.tar.gz"
-      sha256 "b01d258d57cd75ebcf4155e752cb26ec884e8b066d5f0cf5f533e22185f7e251"
+      url "https://github.com/chasesaurabh/portctl/releases/download/v1.0.3/portctl_1.0.3-SNAPSHOT-4de41c1_darwin_arm64.tar.gz"
+      sha256 "b30170392870bc1d0709ad9947cd121bdb8b5ed8dd51ff378c2be3a43e6ad04b"
 
       def install
         bin.install "portctl"
@@ -28,15 +28,15 @@ class Portctl < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/chasesaurabh/portctl/releases/download/v1.0.2/portctl_1.0.2-SNAPSHOT-272216e_linux_amd64.tar.gz"
-      sha256 "1494522c063f6d059d6d5227bd12b633822de12c78aa317d327d7d0fdd35cbcf"
+      url "https://github.com/chasesaurabh/portctl/releases/download/v1.0.3/portctl_1.0.3-SNAPSHOT-4de41c1_linux_amd64.tar.gz"
+      sha256 "163e1f9834b82b66e11d90f54565f1a195c4c3a4ac8b7a60e53bf63cbd7bdcaf"
       def install
         bin.install "portctl"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/chasesaurabh/portctl/releases/download/v1.0.2/portctl_1.0.2-SNAPSHOT-272216e_linux_arm64.tar.gz"
-      sha256 "ff042bd4683f58c738cfb6d641ce5537185c17777270a8dfcb4a149cbd577903"
+      url "https://github.com/chasesaurabh/portctl/releases/download/v1.0.3/portctl_1.0.3-SNAPSHOT-4de41c1_linux_arm64.tar.gz"
+      sha256 "0cb4a3aa581432c896267b0eac943610a70350775ab6073f857ce78baf92dfa8"
       def install
         bin.install "portctl"
       end
