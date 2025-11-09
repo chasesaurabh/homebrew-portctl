@@ -29,6 +29,9 @@ jobs:
             const repo = context.repo.repo;
 
             const body = (pr.body || "").toString();
+            // Debug: emit the PR body so we can see exactly what the action receives (temporary)
+            console.log('PR body raw: >>>' + body + '<<<');
+            console.log('PR body json: ' + JSON.stringify(body));
             // Be tolerant: match payload/signature lines using regex (handles extra spaces, quotes, CRLF)
             const payloadMatch = body.match(/^Automerge-Payload:\s*(.+)$/m);
             const sigMatch = body.match(/^Automerge-Signature:\s*(.+)$/m);
