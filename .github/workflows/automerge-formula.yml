@@ -1,4 +1,4 @@
-﻿name: Auto-merge portctl formula PRs
+name: Auto-merge portctl formula PRs
 
 on:
   pull_request:
@@ -14,23 +14,32 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            // Defensive validation: throw on error so the job stops and later steps don't try to parse empty outputs
             const pr = context.payload.pull_request;
+            if (!pr) {
+              throw new Error('No pull_request payload available in context.');
+            }
+
             const prNumber = pr.number;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
-            const body = pr.body || "";
+            const body = (pr.body || "").toString();
             const payloadLine = body.split('\n').find(l => l.startsWith('Automerge-Payload:'));
             const sigLine = body.split('\n').find(l => l.startsWith('Automerge-Signature:'));
             if (!payloadLine || !sigLine) {
-              core.setFailed('Missing Automerge-Payload or Automerge-Signature in PR body.');
+              throw new Error('Missing Automerge-Payload or Automerge-Signature in PR body.');
             }
-            const payload = payloadLine.split(':').slice(1).join(':').trim();
-            const sigHex = sigLine.split(':').slice(1).join(':').trim();
+
+            // Extract and normalize values (strip surrounding quotes if present)
+            const rawPayload = payloadLine.split(':').slice(1).join(':').trim();
+            const rawSig = sigLine.split(':').slice(1).join(':').trim();
+            const payload = rawPayload.replace(/^"(.+)"$/, '$1');
+            const sigHex = rawSig.replace(/^"(.+)"$/, '$1');
 
             const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: prNumber });
             if (files.length !== 1 || files[0].filename !== 'Formula/portctl.rb') {
-              core.setFailed(`PR must change exactly Formula/portctl.rb. Files: ${files.map(f=>f.filename).join(', ')}`);
+              throw new Error(`PR must change exactly Formula/portctl.rb. Files: ${files.map(f=>f.filename).join(', ')}`);
             }
 
             const commits = await github.paginate(github.rest.pulls.listCommits, { owner, repo, pull_number: prNumber });
@@ -39,7 +48,7 @@ jobs:
               (c.author && c.author.login && c.author.login === 'github-actions[bot]')
             );
             if (!commitMatches) {
-              core.setFailed('No commit indicates origin from chasesaurabh/portctl or was authored by actions bot.');
+              throw new Error('No commit indicates origin from chasesaurabh/portctl or was authored by actions bot.');
             }
 
             return { prNumber, payload, sigHex };
@@ -54,11 +63,6 @@ jobs:
           SIGHEX: ${{ fromJson(steps.validate.outputs.result).sigHex }}
         run: |
           set -euo pipefail
-          # strip surrounding quotes if present
-          PAYLOAD=${PAYLOAD#\"}
-          PAYLOAD=${PAYLOAD%\"}
-          SIGHEX=${SIGHEX#\"}
-          SIGHEX=${SIGHEX%\"}
           if [ -z "${AUTOMERGE_SHARED_SECRET:-}" ]; then
             echo "AUTOMERGE_SHARED_SECRET not set, refusing to auto-merge" >&2
             exit 1
@@ -97,4 +101,3 @@ jobs:
             exit 1
           fi
           echo "Merged PR #${PR_NUMBER} successfully."
-
