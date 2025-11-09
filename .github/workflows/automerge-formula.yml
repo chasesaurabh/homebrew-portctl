@@ -36,8 +36,18 @@ jobs:
                 if (!p.head || !p.head.repo || p.head.repo.full_name !== `${owner}/${repo}`) continue;
                 const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: p.number });
                 if (files.some(f => f.filename === 'Formula/portctl.rb')) {
-                  found = p;
-                  break;
+                  // Prefer PRs whose commits indicate they came from chasesaurabh/portctl or the actions bot
+                  const commits = await github.paginate(github.rest.pulls.listCommits, { owner, repo, pull_number: p.number });
+                  const commitMatches = commits.some(c =>
+                    (c.commit && c.commit.message && c.commit.message.includes('chasesaurabh/portctl')) ||
+                    (c.author && c.author.login && c.author.login === 'github-actions[bot]')
+                  );
+                  if (commitMatches) {
+                    found = p;
+                    break;
+                  }
+                  // Otherwise record it as a fallback candidate but keep searching for a better match
+                  if (!found) found = p;
                 }
               }
               if (!found) {
