@@ -1,5 +1,9 @@
 name: Auto-merge portctl formula PRs
 
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
   pull_request:
     types: [opened, reopened, synchronize, labeled]
@@ -25,15 +29,19 @@ jobs:
             const repo = context.repo.repo;
 
             const body = (pr.body || "").toString();
-            const payloadLine = body.split('\n').find(l => l.startsWith('Automerge-Payload:'));
-            const sigLine = body.split('\n').find(l => l.startsWith('Automerge-Signature:'));
-            if (!payloadLine || !sigLine) {
+            // Debug: emit the PR body so we can see exactly what the action receives (temporary)
+            console.log('PR body raw: >>>' + body + '<<<');
+            console.log('PR body json: ' + JSON.stringify(body));
+            // Be tolerant: match payload/signature lines using regex (handles extra spaces, quotes, CRLF)
+            const payloadMatch = body.match(/^Automerge-Payload:\s*(.+)$/m);
+            const sigMatch = body.match(/^Automerge-Signature:\s*(.+)$/m);
+            if (!payloadMatch || !sigMatch) {
               throw new Error('Missing Automerge-Payload or Automerge-Signature in PR body.');
             }
 
             // Extract and normalize values (strip surrounding quotes if present)
-            const rawPayload = payloadLine.split(':').slice(1).join(':').trim();
-            const rawSig = sigLine.split(':').slice(1).join(':').trim();
+            const rawPayload = payloadMatch[1].trim();
+            const rawSig = sigMatch[1].trim();
             const payload = rawPayload.replace(/^"(.+)"$/, '$1');
             const sigHex = rawSig.replace(/^"(.+)"$/, '$1');
 
@@ -56,6 +64,7 @@ jobs:
       - name: Verify HMAC signature and merge
         env:
           AUTOMERGE_SHARED_SECRET: ${{ secrets.AUTOMERGE_SHARED_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
           PR_NUMBER: ${{ fromJson(steps.validate.outputs.result).prNumber }}
