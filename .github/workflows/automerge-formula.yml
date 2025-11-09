@@ -26,24 +26,22 @@ jobs:
             let pr = context.payload.pull_request;
             let prNumber = pr && pr.number;
             if (!prNumber) {
-              // Try to derive branch from GITHUB_REF: refs/heads/<branch>
-              const ref = process.env.GITHUB_REF || '';
-              let branch = '';
-              if (ref.startsWith('refs/heads/')) {
-                branch = ref.replace('refs/heads/', '');
-              } else if (pr && pr.head && pr.head.ref) {
-                branch = pr.head.ref;
+              // If payload didn't include the PR we need, scan open PRs and pick one that modifies Formula/portctl.rb.
+              const openPRs = await github.paginate(github.rest.pulls.list, { owner, repo, state: 'open' });
+              let found = null;
+              for (const p of openPRs) {
+                // Only consider PRs from this repo (not cross-repo forks)
+                if (!p.head || !p.head.repo || p.head.repo.full_name !== `${owner}/${repo}`) continue;
+                const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: p.number });
+                if (files.some(f => f.filename === 'Formula/portctl.rb')) {
+                  found = p;
+                  break;
+                }
               }
-
-              if (!branch) {
-                throw new Error('Cannot determine branch name to locate the PR.');
+              if (!found) {
+                throw new Error('No open PR found that modifies Formula/portctl.rb');
               }
-
-              const prs = await github.rest.pulls.list({ owner, repo, state: 'open', head: `${owner}:${branch}` });
-              if (!prs || !prs.data || prs.data.length === 0) {
-                throw new Error(`No open PR found for head ${owner}:${branch}`);
-              }
-              pr = prs.data[0];
+              pr = found;
               prNumber = pr.number;
             }
 
