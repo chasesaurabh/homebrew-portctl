@@ -29,15 +29,16 @@ jobs:
             const repo = context.repo.repo;
 
             const body = (pr.body || "").toString();
-            const payloadLine = body.split('\n').find(l => l.startsWith('Automerge-Payload:'));
-            const sigLine = body.split('\n').find(l => l.startsWith('Automerge-Signature:'));
-            if (!payloadLine || !sigLine) {
+            // Be tolerant: match payload/signature lines using regex (handles extra spaces, quotes, CRLF)
+            const payloadMatch = body.match(/^Automerge-Payload:\s*(.+)$/m);
+            const sigMatch = body.match(/^Automerge-Signature:\s*(.+)$/m);
+            if (!payloadMatch || !sigMatch) {
               throw new Error('Missing Automerge-Payload or Automerge-Signature in PR body.');
             }
 
             // Extract and normalize values (strip surrounding quotes if present)
-            const rawPayload = payloadLine.split(':').slice(1).join(':').trim();
-            const rawSig = sigLine.split(':').slice(1).join(':').trim();
+            const rawPayload = payloadMatch[1].trim();
+            const rawSig = sigMatch[1].trim();
             const payload = rawPayload.replace(/^"(.+)"$/, '$1');
             const sigHex = rawSig.replace(/^"(.+)"$/, '$1');
 
