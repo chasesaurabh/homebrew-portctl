@@ -1,5 +1,9 @@
 name: Auto-merge portctl formula PRs
 
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
   pull_request:
     types: [opened, reopened, synchronize, labeled]
@@ -56,6 +60,7 @@ jobs:
       - name: Verify HMAC signature and merge
         env:
           AUTOMERGE_SHARED_SECRET: ${{ secrets.AUTOMERGE_SHARED_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
           PR_NUMBER: ${{ fromJson(steps.validate.outputs.result).prNumber }}
