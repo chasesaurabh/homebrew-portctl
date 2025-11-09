@@ -29,6 +29,8 @@ jobs:
               // If payload didn't include the PR we need, scan open PRs and pick one that modifies Formula/portctl.rb.
               const openPRs = await github.paginate(github.rest.pulls.list, { owner, repo, state: 'open' });
               let found = null;
+              // prefer the most recently created PRs first (they're the likely candidates)
+              openPRs.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
               for (const p of openPRs) {
                 // Only consider PRs from this repo (not cross-repo forks)
                 if (!p.head || !p.head.repo || p.head.repo.full_name !== `${owner}/${repo}`) continue;
