@@ -19,14 +19,33 @@ jobs:
         with:
           script: |
             // Defensive validation: throw on error so the job stops and later steps don't try to parse empty outputs
-            const pr = context.payload.pull_request;
-            if (!pr) {
-              throw new Error('No pull_request payload available in context.');
-            }
-
-            const prNumber = pr.number;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+
+            // Determine PR: prefer payload, but if it's missing or incorrect, find the open PR for this head branch
+            let pr = context.payload.pull_request;
+            let prNumber = pr && pr.number;
+            if (!prNumber) {
+              // Try to derive branch from GITHUB_REF: refs/heads/<branch>
+              const ref = process.env.GITHUB_REF || '';
+              let branch = '';
+              if (ref.startsWith('refs/heads/')) {
+                branch = ref.replace('refs/heads/', '');
+              } else if (pr && pr.head && pr.head.ref) {
+                branch = pr.head.ref;
+              }
+
+              if (!branch) {
+                throw new Error('Cannot determine branch name to locate the PR.');
+              }
+
+              const prs = await github.rest.pulls.list({ owner, repo, state: 'open', head: `${owner}:${branch}` });
+              if (!prs || !prs.data || prs.data.length === 0) {
+                throw new Error(`No open PR found for head ${owner}:${branch}`);
+              }
+              pr = prs.data[0];
+              prNumber = pr.number;
+            }
 
             const body = (pr.body || "").toString();
             // Debug: emit the PR body so we can see exactly what the action receives (temporary)
